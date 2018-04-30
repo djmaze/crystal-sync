@@ -1,0 +1,7 @@
+/.shards/
+/bin/
+/config/anonymization_config.cr
+/docs/
+/lib/
+/crystal-sync
+tags

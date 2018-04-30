@@ -1,0 +1,21 @@
+name: crystal-sync
+version: 0.1.0
+
+authors:
+  - Martin Honermeyer <maze@strahlungsfrei.de>
+
+targets:
+  crystal-sync:
+    main: src/crystal-sync.cr
+
+crystal: 0.24.2
+
+license: MIT
+
+dependencies:
+  pg:
+    github: will/crystal-pg
+  msgpack:
+    github: crystal-community/msgpack-crystal
+  faker:
+    github: askn/faker

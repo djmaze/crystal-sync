@@ -1,0 +1,18 @@
+version: 1.0
+shards:
+  db:
+    github: crystal-lang/crystal-db
+    version: 0.5.0
+
+  faker:
+    github: askn/faker
+    version: 0.3.0
+
+  msgpack:
+    github: crystal-community/msgpack-crystal
+    version: 0.8.0
+
+  pg:
+    github: will/crystal-pg
+    version: 0.14.1
+

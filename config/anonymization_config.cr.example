@@ -1,0 +1,19 @@
+require "faker"
+
+AnonymizationConfig.define do
+  # table "tempdata" do
+  #   truncate
+  # end
+
+  # table "users" do
+  #   replace :first_name { |_| Faker::Name.first_name }
+  #   replace :last_name { |_| Faker::Name.last_name }
+  #   replace :email do |email|
+  #     if email.to_s.ends_with?("@mymail.com")
+  #       email.to_s
+  #     else
+  #       Faker::Internet.email
+  #     end
+  #   end
+  # end
+end
