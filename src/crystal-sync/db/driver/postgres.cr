@@ -59,4 +59,12 @@ class Db::Driver::Postgres < Db::Driver
     end
     array_fields
   end
+
+  def offset_sql(offset : Int, limit : Int) : String
+    "OFFSET #{offset} LIMIT #{limit}"
+  end
+
+  def placeholder_type
+    PlaceholderType::IncrementedDollar
+  end
 end

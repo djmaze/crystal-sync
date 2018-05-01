@@ -18,6 +18,10 @@ RUN apt-get update && apt-get -y install wget \
  && apt-get -y remove wget \
  && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+RUN apt-get update \
+ && apt-get -y install mysql-client \
+ && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
 COPY --from=builder /usr/src/app/bin/crystal-sync /usr/local/bin/
 
 CMD ["crystal-sync"]

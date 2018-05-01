@@ -5,4 +5,6 @@ class Db::Driver::None < Db::Driver
   def load_schema(io : IO); end
   def defer_fk_constraints(&block); end
   def get_array_fields(table : Db::Table); {} of String => Symbol; end
+  def offset_sql(offset : Int, limit : Int) : String; ""; end
+  def placeholder_type; PlaceholderType::Questionmark; end
 end

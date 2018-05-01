@@ -14,7 +14,8 @@ class Db
     @driver = Db::Driver::None.new
     @driver = case @db.driver
       when PG::Driver then Db::Driver::Postgres.new(self)
-      else raise "unsupported driver"
+      when MySql::Driver then Db::Driver::MySql.new(self)
+      else raise "Unsupported driver #{@db.driver}"
     end
 
     begin
@@ -22,6 +23,10 @@ class Db
     ensure
       @db.close
     end
+  end
+
+  def name
+    @db.uri.path.as(String)[1..-1]
   end
 
   def query(sql, *args) : Db::Result
@@ -40,6 +45,6 @@ class Db
     @db.exec(sql, *args)
   end
 
-  delegate :tables, :clear!, :dump_schema, :get_array_fields, :load_schema, :defer_fk_constraints, to: @driver
+  delegate :tables, :clear!, :dump_schema, :get_array_fields, :load_schema, :defer_fk_constraints, :offset_sql, :placeholder_type, to: @driver
   delegate :transaction, :uri, to: @db
 end

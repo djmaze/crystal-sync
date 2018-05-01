@@ -9,7 +9,7 @@ class Db::Table
   end
 
   def [](offset : Int, limit : Int)
-    @db.query("SELECT * FROM #{escaped_name} OFFSET #{offset} LIMIT #{limit}", self)
+    @db.query("SELECT * FROM #{escaped_name} #{@db.offset_sql(offset, limit)}", self)
   end
 
   def count
@@ -29,6 +29,6 @@ class Db::Table
 
   def escaped_name
     # TODO ok?
-    @name.inspect
+    "`#{@name}`"
   end
 end

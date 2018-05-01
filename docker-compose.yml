@@ -1,26 +1,56 @@
 version: "3.4"
 
 services:
-  app:
+  app_postgres:
     build: .
     environment:
-      DATABASE_SOURCE_URL: postgres://postgres:postgres@db1/postgres
-      DATABASE_TARGET_URL: postgres://postgres:postgres@db2/postgres
+      DATABASE_SOURCE_URL: postgres://postgres:postgres@postgres1/postgres
+      DATABASE_TARGET_URL: postgres://postgres:postgres@postgres2/postgres
     volumes:
       - .:/usr/src/app
     networks:
       - backend
     depends_on:
-      - db1
-      - db2
+      - postgres1
+      - postgres2
 
-  db1:
+  app_mysql:
+    build: .
+    environment:
+      DATABASE_SOURCE_URL: mysql://root:secret@mysql1/sync
+      DATABASE_TARGET_URL: mysql://root:secret@mysql2/sync
+    volumes:
+      - .:/usr/src/app
+    networks:
+      - backend
+    depends_on:
+      - mysql1
+      - mysql2
+
+  postgres1:
     image: postgres:9.6
     networks:
       - backend
 
-  db2:
+  postgres2:
     image: postgres:9.6
+    networks:
+      - backend
+
+  mysql1:
+    image: mysql:5
+    environment:
+      MYSQL_DATABASE: sync
+      MYSQL_ROOT_PASSWORD: secret
+    networks:
+      - backend
+
+  mysql2:
+    image: mysql:5
+    command: --max-allowed-packet=16M
+    environment:
+      MYSQL_DATABASE: sync
+      MYSQL_ROOT_PASSWORD: secret
     networks:
       - backend
 
