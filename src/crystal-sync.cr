@@ -10,9 +10,13 @@ module Crystal::Sync
     anonymizer = Anonymizer.new(config)
     packer = MessagePack::Packer.new
 
+    dump_channel = Channel(Nil).new
     Db.new ENV["DATABASE_SOURCE_URL"] do |db|
-      STDERR.puts "Dumping schema"
-      schema = db.dump_schema
+      spawn do
+        STDERR.puts "Dumping schema in the background"
+        schema = db.dump_schema
+        dump_channel.send nil
+      end
 
       db.tables.each do |table|
         if anonymizer.skip_table?(table.name)
@@ -31,12 +35,17 @@ module Crystal::Sync
     packer.write(:EOF)
     packed = packer.to_slice
 
-    STDERR.puts "Export finished!"
+    STDERR.printf "Waiting for dump to finish.."
+    STDERR.flush
+    dump_channel.receive
+    STDERR.puts "\nExport finished!"
 
     Db.new ENV["DATABASE_TARGET_URL"] do |db|
       STDERR.puts "Recreating empty target database"
       db.clear!
+    end
 
+    Db.new ENV["DATABASE_TARGET_URL"] do |db|
       STDERR.puts "Loading schema"
       db.load_schema(schema)
 
