@@ -52,4 +52,8 @@ class Db::Driver::MySql < Db::Driver
   def placeholder_type
     PlaceholderType::Questionmark
   end
+
+  def escape_table_name(name : String) : String
+    "`#{name}`"
+  end
 end

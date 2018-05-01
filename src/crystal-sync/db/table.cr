@@ -28,7 +28,6 @@ class Db::Table
   end
 
   def escaped_name
-    # TODO ok?
-    "`#{@name}`"
+    @db.escape_table_name(@name)
   end
 end

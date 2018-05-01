@@ -7,4 +7,5 @@ class Db::Driver::None < Db::Driver
   def get_array_fields(table : Db::Table); {} of String => Symbol; end
   def offset_sql(offset : Int, limit : Int) : String; ""; end
   def placeholder_type; PlaceholderType::Questionmark; end
+  def escape_table_name(name : String) : String; ""; end
 end

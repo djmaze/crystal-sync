@@ -67,4 +67,8 @@ class Db::Driver::Postgres < Db::Driver
   def placeholder_type
     PlaceholderType::IncrementedDollar
   end
+
+  def escape_table_name(name : String) : String
+    name.inspect
+  end
 end
