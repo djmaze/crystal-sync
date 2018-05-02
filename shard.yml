@@ -13,6 +13,9 @@ crystal: 0.24.2
 license: MIT
 
 dependencies:
+  admiral:
+    github: djmaze/admiral.cr
+    branch: master
   faker:
     github: askn/faker
   msgpack:

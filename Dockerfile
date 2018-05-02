@@ -24,4 +24,4 @@ RUN apt-get update \
 
 COPY --from=builder /usr/src/app/bin/crystal-sync /usr/local/bin/
 
-CMD ["crystal-sync"]
+ENTRYPOINT ["crystal-sync"]

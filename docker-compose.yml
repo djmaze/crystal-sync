@@ -3,9 +3,7 @@ version: "3.4"
 services:
   app_postgres:
     build: .
-    environment:
-      DATABASE_SOURCE_URL: postgres://postgres:postgres@postgres1/postgres
-      DATABASE_TARGET_URL: postgres://postgres:postgres@postgres2/postgres
+    command: postgres://postgres:postgres@postgres1/postgres postgres://postgres:postgres@postgres2/postgres
     volumes:
       - .:/usr/src/app
     networks:
@@ -16,9 +14,7 @@ services:
 
   app_mysql:
     build: .
-    environment:
-      DATABASE_SOURCE_URL: mysql://root:secret@mysql1/sync
-      DATABASE_TARGET_URL: mysql://root:secret@mysql2/sync
+    command: mysql://root:secret@mysql1/sync mysql://root:secret@mysql2/sync
     volumes:
       - .:/usr/src/app
     networks:

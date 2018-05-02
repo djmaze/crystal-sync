@@ -1,9 +1,24 @@
 require "./crystal-sync/*"
 require "../config/anonymization_config"
 
-module Crystal::Sync
+require "admiral"
 
-  def self.run
+class CrystalSync < Admiral::Command
+  define_argument database_source : String, required: true, description: "source database URL or filename"
+  define_argument database_target : String, required: true, description: "target database URL or filename"
+  define_help short: h, description: "Copies a source into a target database, while optionally anonymizing data.
+
+The source and target arguments have to be database URLs in the form of:
+
+    postgres://<user>:<password>@<host>:<port>/<database>
+    mysql://<user>:<password>@<host>:<port>/<database>"
+
+  def run
+    unless db_uri?(arguments.database_source) && db_uri?(arguments.database_target)
+      STDERR.puts "Fatal: invalid database URI! Use either postgres:// or mysql:// scheme for both arguments"
+      exit 1
+    end
+
     schema = IO::Memory.new 0       # FIXME Find better way to prevent compilation error
 
     config = AnonymizationConfig.instance
@@ -11,7 +26,7 @@ module Crystal::Sync
     packer = MessagePack::Packer.new
 
     dump_channel = Channel(Nil).new
-    Db.new ENV["DATABASE_SOURCE_URL"] do |db|
+    Db.new arguments.database_source do |db|
       spawn do
         STDERR.puts "Dumping schema in the background"
         schema = db.dump_schema
@@ -40,12 +55,12 @@ module Crystal::Sync
     dump_channel.receive
     STDERR.puts "\nExport finished!"
 
-    Db.new ENV["DATABASE_TARGET_URL"] do |db|
+    Db.new arguments.database_target do |db|
       STDERR.puts "Recreating empty target database"
       db.clear!
     end
 
-    Db.new ENV["DATABASE_TARGET_URL"] do |db|
+    Db.new arguments.database_target do |db|
       STDERR.puts "Loading schema"
       db.load_schema(schema)
 
@@ -73,6 +88,10 @@ module Crystal::Sync
 
     STDERR.puts "\nImport finished!"
   end
+
+  def db_uri?(string : String)
+    ["mysql", "postgres"].includes? URI.parse(string).scheme
+  end
 end
 
-Crystal::Sync.run
+CrystalSync.run
