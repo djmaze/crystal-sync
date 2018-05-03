@@ -17,7 +17,8 @@ class Db::Driver::Postgres < Db::Driver
 
   def dump_schema : IO::Memory
     buffer = IO::Memory.new(10*1024)
-    Process.run("/bin/sh", ["-c", "pg_dump --schema-only --no-owner --no-privileges #{@db.uri}"], env: {"PATH" => ENV["PATH"]}, error: STDERR, output: buffer)
+    dump_tables(buffer)
+    dump_sequences(buffer)
     buffer.rewind
     buffer
   end
@@ -70,5 +71,22 @@ class Db::Driver::Postgres < Db::Driver
 
   def escape_table_name(name : String) : String
     name.inspect
+  end
+
+  private def dump_tables(buffer : IO)
+    Process.run("/bin/sh", ["-c", "pg_dump --schema-only --no-owner --no-privileges #{@db.uri}"], error: STDERR, output: buffer)
+  end
+
+  private def dump_sequences(buffer : IO)
+    table_args = sequences.map do |sequence|
+      "-t #{sequence}"
+    end.join(" ")
+    Process.run("/bin/sh", ["-c", "pg_dump --data-only --no-owner --no-privileges #{table_args} #{@db.uri}"], error: STDERR, output: buffer)
+  end
+
+  private def sequences
+    sql = "SELECT sequence_name FROM INFORMATION_SCHEMA.SEQUENCES WHERE sequence_schema = 'public' ORDER BY sequence_name;"
+    result = @db.query(sql)
+    result.rows.map { |row| row[0].value.to_s }
   end
 end
