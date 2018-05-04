@@ -8,4 +8,5 @@ class Db::Driver::None < Db::Driver
   def offset_sql(offset : Int, limit : Int) : String; ""; end
   def placeholder_type; PlaceholderType::Questionmark; end
   def escape_table_name(name : String) : String; ""; end
+  def primary_key_for_table(name : String) : String; ""; end
 end

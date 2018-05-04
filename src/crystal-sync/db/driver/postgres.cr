@@ -73,6 +73,17 @@ class Db::Driver::Postgres < Db::Driver
     name.inspect
   end
 
+  def primary_key_for_table(name : String) : String
+    sql = "SELECT a.attname \
+    FROM   pg_index i \
+    JOIN   pg_attribute a ON a.attrelid = i.indrelid \
+                         AND a.attnum = ANY(i.indkey) \
+                         WHERE  i.indrelid = '#{name}'::regclass \
+                         AND    i.indisprimary;"
+    result = @db.query(sql)
+    result.rows.first[0].to_s
+  end
+
   private def dump_tables(buffer : IO)
     Process.run("/bin/sh", ["-c", "pg_dump --schema-only --no-owner --no-privileges #{@db.uri}"], error: STDERR, output: buffer)
   end

@@ -56,4 +56,10 @@ class Db::Driver::MySql < Db::Driver
   def escape_table_name(name : String) : String
     "`#{name}`"
   end
+
+  def primary_key_for_table(name : String) : String
+    sql = "SHOW KEYS FROM #{name} WHERE Key_name = 'PRIMARY'"
+    result = @db.query(sql)
+    result.rows.first[0].to_s
+  end
 end
