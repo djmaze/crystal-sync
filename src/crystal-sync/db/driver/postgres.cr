@@ -31,6 +31,7 @@ class Db::Driver::Postgres < Db::Driver
     @db.transaction do
       # FIXME Deferring constraints does somehow not work, disabling all triggers instead
       #@db.exec "SET CONSTRAINTS ALL DEFERRED"
+      @db.exec "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE"
       tables.each do |table|
         @db.exec "ALTER TABLE #{table.escaped_name} DISABLE TRIGGER ALL;"
       end
