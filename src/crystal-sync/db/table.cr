@@ -21,8 +21,10 @@ class Db::Table
   end
 
   def rows_in_batches
-    0.step(to: count, by: LIMIT) do |offset|
-      yield self[offset, LIMIT]
+    @db.in_serializable_transaction do
+      0.step(to: count, by: LIMIT) do |offset|
+        yield self[offset, LIMIT]
+      end
     end
   end
 

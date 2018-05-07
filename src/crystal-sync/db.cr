@@ -45,6 +45,13 @@ class Db
     @db.exec(sql, *args)
   end
 
+  def in_serializable_transaction(&block)
+    transaction do
+      exec "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE, READ ONLY, DEFERRABLE"
+      yield
+    end
+  end
+
   delegate :tables, :clear!, :dump_schema, :escape_table_name, :get_array_fields, :load_schema, :defer_fk_constraints, :offset_sql, :placeholder_type, :primary_key_for_table, to: @driver
   delegate :transaction, :uri, to: @db
 end
