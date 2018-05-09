@@ -62,4 +62,13 @@ class Db::Driver::MySql < Db::Driver
     result = @db.query(sql)
     result.rows.first[0].to_s
   end
+
+  def table_as_csv(table_name : String, &block)
+    # TOOD
+  end
+
+  def table_from_csv(table_name : String) : IO
+    # TOOD
+    IO::Memory.new
+  end
 end

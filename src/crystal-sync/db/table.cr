@@ -1,5 +1,7 @@
+require "csv"
+
 class Db::Table
-  LIMIT = 1000
+  LIMIT = 10000
 
   getter name : String
   getter array_fields = {} of String => Symbol
@@ -20,10 +22,21 @@ class Db::Table
     result.rows.first[0].to_i
   end
 
-  def rows_in_batches
-    @db.in_serializable_transaction do
+  def rows_in_batches(&block)
+    @db.table_as_csv(@name) do |buffer|
+      csv = CSV.new(buffer, headers: true)
       0.step(to: count, by: LIMIT) do |offset|
-        yield self[offset, LIMIT]
+        rows = Array(Array(String)).new(LIMIT)
+        max = if (offset + LIMIT) <= count
+                LIMIT
+              else
+                count - offset
+              end
+        max.times do
+          break if buffer.closed? || !csv.next
+          rows << csv.row.to_a
+        end
+        yield csv.headers, rows
       end
     end
   end

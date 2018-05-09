@@ -84,6 +84,20 @@ class Db::Driver::Postgres < Db::Driver
     result.rows.first[0].to_s
   end
 
+  def table_as_csv(table_name : String, &block)
+    IO.pipe do |read, write|
+      Process.run("/bin/sh", ["-c", "psql #{@db.uri} -c \"COPY #{table_name} TO STDOUT WITH (FORMAT csv, HEADER true, NULL '\\N')\"; echo \"EOT\""], error: STDERR, output: write) do
+        yield read
+      end
+    end
+  end
+
+  def table_from_csv(table_name : String) : IO
+    read, write = IO.pipe
+    Process.new("/bin/sh", ["-c", "psql #{@db.uri} -c \"COPY #{table_name} FROM STDIN WITH (FORMAT csv, HEADER true, NULL '\\N')\""], input: read, error: STDERR)
+    write
+  end
+
   private def dump_tables(buffer : IO)
     Process.run("/bin/sh", ["-c", "pg_dump --schema-only --no-owner --no-privileges #{@db.uri}"], error: STDERR, output: buffer)
   end

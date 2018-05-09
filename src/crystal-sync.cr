@@ -87,23 +87,25 @@ class CrystalSync < Admiral::Command
 
         STDERR.puts "Loading data"
 
-        loader = DataLoader.new(db)
-
         puts "Deferring foreign-key constraints"
         db.defer_fk_constraints do
           last_table_name = ""
+          current_loader : (DataLoader | Nil) = nil
           DeserializedData.from_msgpack(input) do |deserialized|
             table_name = deserialized.table_name
             if table_name != last_table_name
               STDERR.printf "\nLoading table #{deserialized.table_name}"
               STDERR.flush
               last_table_name = table_name
+              current_loader.done if current_loader
+              current_loader = DataLoader.new(db, table_name, deserialized.columns)
             end
 
             STDERR.printf(".")
             STDERR.flush
-            loader.load(deserialized)
+            current_loader.not_nil!.load(deserialized)
           end
+          current_loader.try &.done
         end
       end
 
