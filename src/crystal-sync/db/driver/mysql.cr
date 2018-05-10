@@ -1,3 +1,5 @@
+require "tempfile"
+
 require "mysql"
 
 class Db::Driver::MySql < Db::Driver
@@ -19,7 +21,7 @@ class Db::Driver::MySql < Db::Driver
     buffer = IO::Memory.new(10*1024)
     Process.run("/bin/sh",
                 ["-c",
-                 "mysqldump --host=#{@db.uri.host} --user=#{@db.uri.user} --password=#{@db.uri.password} --port=#{@db.uri.port} --no-data #{@db.name}"
+                 "mysqldump #{mysql_conn_opts} --no-data #{@db.name}"
                 ],
                 error: STDERR, output: buffer)
     buffer.rewind
@@ -29,7 +31,7 @@ class Db::Driver::MySql < Db::Driver
   def load_schema(schema_buffer : IO)
     Process.run("/bin/sh",
                 ["-c",
-                 "mysql --host=#{@db.uri.host} --user=#{@db.uri.user} --password=#{@db.uri.password} #{@db.name}"
+                 "mysql #{mysql_conn_opts} #{@db.name}"
                 ],
                 input: schema_buffer, error: STDERR)
   end
@@ -64,11 +66,32 @@ class Db::Driver::MySql < Db::Driver
   end
 
   def table_as_csv(table_name : String, &block)
-    # TOOD
+    IO.pipe do |read, write|
+      # https://stackoverflow.com/a/25427665/3515146
+      sql_command = "SELECT * FROM #{table_name}"
+      sed_command = %q(sed "s/'/\'/;s/\t/\",\"/g;s/^/\"/;s/$/\"/;s/\n//g")
+      Process.run("/bin/sh", ["-c", "mysql --batch #{mysql_conn_opts} #{@db.name} -e \"#{sql_command}\" | #{sed_command}; echo \"\n\""], error: STDERR, output: write) do
+        yield read
+      end
+    end
   end
 
   def table_from_csv(table_name : String) : IO
-    # TOOD
-    IO::Memory.new
+    fifo = create_fifo
+    sql_command = %Q(LOAD DATA LOCAL INFILE '#{fifo.path}' INTO TABLE #{table_name} FIELDS TERMINATED BY \',\' ENCLOSED BY \'\\"\' LINES TERMINATED BY \'\\n\' IGNORE 1 LINES)
+    Process.new("/bin/sh", ["-c", "mysql --batch #{mysql_conn_opts} #{@db.name} -e \"#{sql_command}\""], error: STDERR, output: STDOUT)
+    File.open(fifo.path, "w")
+  end
+
+  private def mysql_conn_opts
+    "--host=#{@db.uri.host} --user=#{@db.uri.user} --password=#{@db.uri.password} --port=#{@db.uri.port || 3306}"
+  end
+
+  private def create_fifo : Tempfile
+    Tempfile.open("crystal-sync", "fifo") do |fifo|
+      fifo.unlink
+      `mkfifo -m 0600 #{fifo.path}`
+      at_exit { fifo.unlink }
+    end
   end
 end
