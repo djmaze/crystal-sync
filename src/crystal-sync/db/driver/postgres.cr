@@ -11,7 +11,7 @@ class Db::Driver::Postgres < Db::Driver
   end
 
   def clear!
-    @db.exec "DROP SCHEMA public CASCADE;"
+    @db.exec "DROP SCHEMA IF EXISTS public CASCADE;"
     @db.exec "CREATE SCHEMA public;"
   end
 

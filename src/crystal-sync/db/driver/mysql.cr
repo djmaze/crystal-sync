@@ -11,7 +11,7 @@ class Db::Driver::MySql < Db::Driver
   end
 
   def clear!
-    @db.exec "DROP DATABASE #{@db.name}"
+    @db.exec "DROP DATABASE IF EXISTS #{@db.name}"
     @db.exec "CREATE DATABASE #{@db.name}"
   end
 
