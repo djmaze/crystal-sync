@@ -43,7 +43,7 @@ class CrystalSync < Admiral::Command
             STDERR.puts "Skipping #{table.name}"
           else
             records = table.count
-            STDERR.puts "\n#{table.name}: #{records} records"
+            STDERR.puts "\nDumping table #{table.name}: #{records} records"
 
             if records > 0
               table_anonymizer = anonymizer.for_table(table)
