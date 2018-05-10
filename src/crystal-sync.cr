@@ -53,6 +53,7 @@ class CrystalSync < Admiral::Command
         end
       end
       packer.write(:EOF)
+      output.flush
 
       STDERR.puts "\nDump finished!"
     end
