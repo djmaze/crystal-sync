@@ -59,12 +59,6 @@ class Db::Driver::MySql < Db::Driver
     "`#{name}`"
   end
 
-  def primary_key_for_table(name : String) : String
-    sql = "SHOW KEYS FROM #{name} WHERE Key_name = 'PRIMARY'"
-    result = @db.query(sql)
-    result.rows.first[0].to_s
-  end
-
   def table_as_csv(table_name : String, &block)
     IO.pipe do |read, write|
       # https://stackoverflow.com/a/25427665/3515146

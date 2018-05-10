@@ -5,16 +5,9 @@ class Db::Table
 
   getter name : String
   getter array_fields = {} of String => Symbol
-  getter primary_key : String
 
   def initialize(@db : Db, @name : String)
-    @primary_key = ""
     @array_fields = @db.get_array_fields(self)
-    @primary_key = @db.primary_key_for_table(@name)
-  end
-
-  def [](offset : Int, limit : Int)
-    @db.query("SELECT * FROM #{escaped_name} ORDER BY #{primary_key} #{@db.offset_sql(offset, limit)}", self)
   end
 
   def count

@@ -73,17 +73,6 @@ class Db::Driver::Postgres < Db::Driver
     name.inspect
   end
 
-  def primary_key_for_table(name : String) : String
-    sql = "SELECT a.attname \
-    FROM   pg_index i \
-    JOIN   pg_attribute a ON a.attrelid = i.indrelid \
-                         AND a.attnum = ANY(i.indkey) \
-                         WHERE  i.indrelid = '#{name}'::regclass \
-                         AND    i.indisprimary;"
-    result = @db.query(sql)
-    result.rows.first[0].to_s
-  end
-
   def table_as_csv(table_name : String, &block)
     IO.pipe do |read, write|
       Process.run("/bin/sh", ["-c", "psql #{@db.uri} -c \"COPY #{table_name} TO STDOUT WITH (FORMAT csv, HEADER true, NULL '\\N')\"; echo \"\n\""], error: STDERR, output: write) do
