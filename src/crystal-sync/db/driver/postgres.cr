@@ -86,7 +86,7 @@ class Db::Driver::Postgres < Db::Driver
 
   def table_as_csv(table_name : String, &block)
     IO.pipe do |read, write|
-      Process.run("/bin/sh", ["-c", "psql #{@db.uri} -c \"COPY #{table_name} TO STDOUT WITH (FORMAT csv, HEADER true, NULL '\\N')\"; echo \"EOT\""], error: STDERR, output: write) do
+      Process.run("/bin/sh", ["-c", "psql #{@db.uri} -c \"COPY #{table_name} TO STDOUT WITH (FORMAT csv, HEADER true, NULL '\\N')\"; echo \"\n\""], error: STDERR, output: write) do
         yield read
       end
     end

@@ -25,18 +25,20 @@ class Db::Table
   def rows_in_batches(&block)
     @db.table_as_csv(@name) do |buffer|
       csv = CSV.new(buffer, headers: true)
-      0.step(to: count, by: LIMIT) do |offset|
+      done = false
+      0.step(by: LIMIT) do |offset|
         rows = Array(Array(String)).new(LIMIT)
-        max = if (offset + LIMIT) <= count
-                LIMIT
-              else
-                count - offset
-              end
-        max.times do
+        LIMIT.times do
           break if buffer.closed? || !csv.next
-          rows << csv.row.to_a
+          if csv.row.to_a.empty?
+            done = true
+          else
+            rows << csv.row.to_a
+          end
+          break if done
         end
-        yield csv.headers, rows
+        yield csv.headers, rows if rows.any?
+        break if done
       end
     end
   end
