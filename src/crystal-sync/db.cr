@@ -30,15 +30,13 @@ class Db
   end
 
   def query(sql, *args) : Db::Result
-    @db.query(sql, *args) do |rs|
-      return Db::Result.new(rs, nil)
-    end
+    rs = @db.query(sql, *args)
+    return Db::Result.new(rs, nil)
   end
 
   def query(sql, table : Db::Table, *args) : Db::Result
-    @db.query(sql, *args) do |rs|
-      return Db::Result.new(rs, table)
-    end
+    rs = @db.query(sql, *args)
+    return Db::Result.new(rs, table)
   end
 
   def exec(sql, *args)
@@ -47,7 +45,7 @@ class Db
 
   def in_serializable_transaction(&block)
     transaction do
-      exec "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE, READ ONLY, DEFERRABLE"
+      exec "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE, READ ONLY"    # FIXME DEFERRABLE needed for Postgres?
       yield
     end
   end

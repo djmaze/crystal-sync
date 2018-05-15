@@ -9,7 +9,11 @@ class Db::Driver::MySql < Db::Driver
   def tables
     sql = "SHOW FULL TABLES WHERE TABLE_TYPE != 'VIEW'"
     result = @db.query(sql)
-    result.rows.map { |row| Db::Table.new(@db, row[0].value.to_s) }
+    begin
+      result.rows.map { |row| Db::Table.new(@db, row[0].value.to_s) }
+    ensure
+      result.close
+    end
   end
 
   def clear!
@@ -61,11 +65,14 @@ class Db::Driver::MySql < Db::Driver
 
   def table_as_csv(table_name : String, &block)
     IO.pipe do |read, write|
-      # https://stackoverflow.com/a/25427665/3515146
       sql_command = "SELECT * FROM #{table_name}"
-      sed_command = %q(sed "s/'/\'/;s/\t/\",\"/g;s/^/\"/;s/$/\"/;s/\n//g")
-      Process.run("/bin/sh", ["-c", "mysql --batch #{mysql_conn_opts} #{@db.name} -e \"#{sql_command}\" | #{sed_command}; echo \"\n\""], error: STDERR, output: write) do
-        yield read
+      @db.in_serializable_transaction do
+        result = @db.query(sql_command)
+        begin
+          yield result
+        ensure
+          result.close
+        end
       end
     end
   end
