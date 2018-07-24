@@ -90,9 +90,9 @@ class Db::Driver::MySql < Db::Driver
 
   private def create_fifo : Tempfile
     Tempfile.open("crystal-sync", "fifo") do |fifo|
-      fifo.unlink
+      fifo.delete
       `mkfifo -m 0600 #{fifo.path}`
-      at_exit { fifo.unlink }
+      at_exit { fifo.delete }
     end
   end
 end
