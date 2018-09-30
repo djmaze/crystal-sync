@@ -17,4 +17,4 @@ The resulting binary can be found at `bin/crystal-sync_cli`
 crystal-sync-cli generate <directory>
 ```
 
-This creates a new directory at `<directory>` with an empty configuration. See the file `README.md` in that directory for further instructions.
+This creates a new directory at `<directory>` with an empty configuration. See the [README for the generated configuration](templates/README.md) for further instructions.

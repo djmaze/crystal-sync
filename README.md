@@ -43,7 +43,7 @@ bin/crystal-sync dump [...]
 bin/crystal-sync load [...]
 ```
 
-See the [CLI README](cli/README.md) for further instructions.
+See the [CLI README](cli/README.md) and the [README for the generated configuration](cli/templates/README.md) for further instructions.
 
 ## Development
 
