@@ -1,11 +1,14 @@
 require "pg"
 
 class Db::Driver::Postgres < Db::Driver
+  @schema : String
+
   def initialize(@db : Db)
+    @schema = @db.schema || "public"
   end
 
   def tables
-    sql = "SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = 'public' ORDER BY table_name;"
+    sql = "SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = '#{@schema}' ORDER BY table_name;"
     result = @db.query(sql)
     begin
       result.rows.map { |row| Db::Table.new(@db, row[0].value.to_s) }
@@ -15,8 +18,8 @@ class Db::Driver::Postgres < Db::Driver
   end
 
   def clear!
-    @db.exec "DROP SCHEMA IF EXISTS public CASCADE;"
-    @db.exec "CREATE SCHEMA public;"
+    @db.exec "DROP SCHEMA IF EXISTS #{@schema} CASCADE;"
+    @db.exec "CREATE SCHEMA #{@schema};"
   end
 
   def dump_schema : IO::Memory
@@ -36,11 +39,11 @@ class Db::Driver::Postgres < Db::Driver
       # FIXME Deferring constraints does somehow not work, disabling all triggers instead
       #@db.exec "SET CONSTRAINTS ALL DEFERRED"
       tables.each do |table|
-        @db.exec "ALTER TABLE #{table.escaped_name} DISABLE TRIGGER ALL;"
+        @db.exec "ALTER TABLE #{@schema}.#{table.escaped_name} DISABLE TRIGGER ALL;"
       end
       yield
       tables.each do |table|
-        @db.exec "ALTER TABLE #{table.escaped_name} ENABLE TRIGGER ALL;"
+        @db.exec "ALTER TABLE #{@schema}.#{table.escaped_name} ENABLE TRIGGER ALL;"
       end
     end
   end
@@ -50,7 +53,7 @@ class Db::Driver::Postgres < Db::Driver
     result = @db.query(
       "SELECT column_name, udt_name
       FROM information_schema.columns
-      WHERE table_schema = 'public'
+      WHERE table_schema = '#{@schema}'
       AND table_name = '#{table.name}' AND data_type = 'ARRAY';"
     )
     begin
@@ -78,12 +81,12 @@ class Db::Driver::Postgres < Db::Driver
   end
 
   def escape_table_name(name : String) : String
-    name.inspect
+    %Q(#{@schema}."#{name}")
   end
 
   def table_as_csv(table_name : String, &block)
     IO.pipe do |read, write|
-      Process.run("/bin/sh", ["-c", "psql #{@db.uri} -c \"COPY #{table_name} TO STDOUT WITH (FORMAT csv, HEADER true, NULL '\\N')\"; echo \"\n\""], error: STDERR, output: write) do
+      Process.run("/bin/sh", ["-c", "psql #{@db.uri} -c \"COPY #{@schema}.#{table_name} TO STDOUT WITH (FORMAT csv, HEADER true, NULL '\\N')\"; echo \"\n\""], error: STDERR, output: write) do
         yield CSV.new(read, headers: true)
       end
     end
@@ -91,23 +94,23 @@ class Db::Driver::Postgres < Db::Driver
 
   def table_from_csv(table_name : String) : IO
     read, write = IO.pipe
-    Process.new("/bin/sh", ["-c", "psql #{@db.uri} -c \"COPY #{table_name} FROM STDIN WITH (FORMAT csv, HEADER true, NULL '\\N')\""], input: read, error: STDERR)
+    Process.new("/bin/sh", ["-c", "psql #{@db.uri} -c \"COPY #{@schema}.#{table_name} FROM STDIN WITH (FORMAT csv, HEADER true, NULL '\\N')\""], input: read, error: STDERR)
     write
   end
 
   private def dump_tables(buffer : IO)
-    Process.run("/bin/sh", ["-c", "pg_dump --schema-only --no-owner --no-privileges #{@db.uri}"], error: STDERR, output: buffer)
+    Process.run("/bin/sh", ["-c", "pg_dump --schema-only --no-owner --no-privileges -n #{@schema} #{@db.uri}"], error: STDERR, output: buffer)
   end
 
   private def dump_sequences(buffer : IO)
     table_args = sequences.map do |sequence|
       "-t #{sequence}"
     end.join(" ")
-    Process.run("/bin/sh", ["-c", "pg_dump --data-only --no-owner --no-privileges #{table_args} #{@db.uri}"], error: STDERR, output: buffer)
+    Process.run("/bin/sh", ["-c", "pg_dump --data-only --no-owner --no-privileges -n #{@schema} #{table_args} #{@db.uri}"], error: STDERR, output: buffer)
   end
 
   private def sequences
-    sql = "SELECT sequence_name FROM INFORMATION_SCHEMA.SEQUENCES WHERE sequence_schema = 'public' ORDER BY sequence_name;"
+    sql = "SELECT sequence_name FROM INFORMATION_SCHEMA.SEQUENCES WHERE sequence_schema = '#{@schema}' ORDER BY sequence_name;"
     result = @db.query(sql)
     begin
       result.rows.map { |row| row[0].value.to_s }

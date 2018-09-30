@@ -55,6 +55,13 @@ postgres://user:password@host:port/database
 mysql://user:passwod@host:port/database
 ```
 
+For PostgreSQL, it is also possible to specify a source and target schema with the `schema` query parameter:
+
+```
+postgres://user:password@host:port/database?schema=foo
+```
+
+
 ## Examples
 
 ### Dumping to a file

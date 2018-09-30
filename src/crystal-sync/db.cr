@@ -7,9 +7,15 @@ require "./db/*"
 class Db
   @db : DB::Database
   @driver : Db::Driver
+  getter schema : String | Nil
 
   def initialize(url)
-    @db = DB.open url
+    uri = URI.parse(url)
+    params = HTTP::Params.parse(uri.query || "")
+    @schema = params.delete("schema") if params.has_key?("schema")
+    uri.query = params.empty? ? nil : params.to_s
+
+    @db = DB.open uri.to_s
 
     @driver = Db::Driver::None.new
     @driver = case @db.driver
