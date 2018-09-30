@@ -1,29 +1,39 @@
+require "csv"
+
 class Db::Table
-  LIMIT = 1000
+  LIMIT = 10000
 
   getter name : String
   getter array_fields = {} of String => Symbol
-  getter primary_key : String
 
   def initialize(@db : Db, @name : String)
-    @primary_key = ""
     @array_fields = @db.get_array_fields(self)
-    @primary_key = @db.primary_key_for_table(@name)
-  end
-
-  def [](offset : Int, limit : Int)
-    @db.query("SELECT * FROM #{escaped_name} ORDER BY #{primary_key} #{@db.offset_sql(offset, limit)}", self)
   end
 
   def count
     result = @db.query "SELECT COUNT(*) FROM #{escaped_name}"
-    result.rows.first[0].to_i
+    begin
+      result.rows.first[0].to_i
+    ensure
+      result.close
+    end
   end
 
-  def rows_in_batches
-    @db.in_serializable_transaction do
-      0.step(to: count, by: LIMIT) do |offset|
-        yield self[offset, LIMIT]
+  def rows_in_batches(&block)
+    @db.table_as_csv(@name) do |csv|
+      done = false
+      0.step(by: LIMIT) do |offset|
+        rows = Array(Array(String)).new(LIMIT)
+        LIMIT.times do
+          if csv.next && (values = csv.row.to_a).any?
+            rows << values.not_nil!.map(&.to_s)
+          else
+            done = true
+          end
+          break if done
+        end
+        yield csv.headers, rows if rows.any?
+        break if done
       end
     end
   end

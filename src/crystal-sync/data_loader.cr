@@ -1,31 +1,21 @@
 class DataLoader
-  def initialize(@db : Db)
+  @table_buffer : IO
+
+  def initialize(@db : Db, @table_name : String, columns : Array(String))
     @i = 0
+    @table_buffer = @db.table_from_csv(table_name)
+    @csv = CSV::Builder.new(@table_buffer)
+    @csv.row columns
   end
 
   def load(deserialized : DeserializedData)
-    sql = "INSERT INTO #{deserialized.table_name} "
-    #sql += "(" + deserialized.columns.join(", ") + ") VALUES "
-    sql += "VALUES "
-    args = [] of Db::Value
-
-    reset_placeholder
-    sql += deserialized.rows.map do |row|
-      fields = row.as(Array(MessagePack::Type))
-
-      args += map_fields(fields)
-      "(" + fields.size.times.map { placeholder }.join(",") + ")"
-    end.join(",")
-
-    sql += ";"
-
-    begin
-      @db.exec(sql, args)
-    rescue ex
-      STDERR.puts "Error during import of #{deserialized.table_name}!"
-      STDERR.puts ex.message.as(String)[0,500]
-      raise "import failed"
+    deserialized.rows.each do |row|
+      @csv.row row
     end
+  end
+
+  def done
+    @table_buffer.close
   end
 
   private def placeholder

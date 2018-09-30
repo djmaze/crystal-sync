@@ -7,11 +7,15 @@ class Db::Driver::Postgres < Db::Driver
   def tables
     sql = "SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = 'public' ORDER BY table_name;"
     result = @db.query(sql)
-    result.rows.map { |row| Db::Table.new(@db, row[0].value.to_s) }
+    begin
+      result.rows.map { |row| Db::Table.new(@db, row[0].value.to_s) }
+    ensure
+      result.close
+    end
   end
 
   def clear!
-    @db.exec "DROP SCHEMA public CASCADE;"
+    @db.exec "DROP SCHEMA IF EXISTS public CASCADE;"
     @db.exec "CREATE SCHEMA public;"
   end
 
@@ -49,16 +53,20 @@ class Db::Driver::Postgres < Db::Driver
       WHERE table_schema = 'public'
       AND table_name = '#{table.name}' AND data_type = 'ARRAY';"
     )
-    result.rows.each do |row|
-      name, type = row[0..1]
-      case type.value
-      when "_varchar", "_text" then array_fields[name.to_s] = :string
-      when "_timestamptz" then array_fields[name.to_s] = :time
-      when "_float8" then array_fields[name.to_s]  = :float
-      else raise "Unsupported array type #{type.value}"
+    begin
+      result.rows.each do |row|
+        name, type = row[0..1]
+        case type.value
+        when "_varchar", "_text" then array_fields[name.to_s] = :string
+        when "_timestamptz" then array_fields[name.to_s] = :time
+        when "_float8" then array_fields[name.to_s]  = :float
+        else raise "Unsupported array type #{type.value}"
+        end
       end
+      array_fields
+    ensure
+      result.close
     end
-    array_fields
   end
 
   def offset_sql(offset : Int, limit : Int) : String
@@ -73,15 +81,18 @@ class Db::Driver::Postgres < Db::Driver
     name.inspect
   end
 
-  def primary_key_for_table(name : String) : String
-    sql = "SELECT a.attname \
-    FROM   pg_index i \
-    JOIN   pg_attribute a ON a.attrelid = i.indrelid \
-                         AND a.attnum = ANY(i.indkey) \
-                         WHERE  i.indrelid = '#{name}'::regclass \
-                         AND    i.indisprimary;"
-    result = @db.query(sql)
-    result.rows.first[0].to_s
+  def table_as_csv(table_name : String, &block)
+    IO.pipe do |read, write|
+      Process.run("/bin/sh", ["-c", "psql #{@db.uri} -c \"COPY #{table_name} TO STDOUT WITH (FORMAT csv, HEADER true, NULL '\\N')\"; echo \"\n\""], error: STDERR, output: write) do
+        yield CSV.new(read, headers: true)
+      end
+    end
+  end
+
+  def table_from_csv(table_name : String) : IO
+    read, write = IO.pipe
+    Process.new("/bin/sh", ["-c", "psql #{@db.uri} -c \"COPY #{table_name} FROM STDIN WITH (FORMAT csv, HEADER true, NULL '\\N')\""], input: read, error: STDERR)
+    write
   end
 
   private def dump_tables(buffer : IO)
@@ -98,6 +109,10 @@ class Db::Driver::Postgres < Db::Driver
   private def sequences
     sql = "SELECT sequence_name FROM INFORMATION_SCHEMA.SEQUENCES WHERE sequence_schema = 'public' ORDER BY sequence_name;"
     result = @db.query(sql)
-    result.rows.map { |row| row[0].value.to_s }
+    begin
+      result.rows.map { |row| row[0].value.to_s }
+    ensure
+      result.close
+    end
   end
 end

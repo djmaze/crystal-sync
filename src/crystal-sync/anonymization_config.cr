@@ -24,8 +24,8 @@ class AnonymizationConfig
   class TableConfig
     getter? default = true
     getter? truncate = false
-    getter replace_value = {} of String => String
-    getter replace_proc = {} of String => Proc(Db::Value, String)
+    getter replace_value = {} of String => String?
+    getter replace_proc = {} of String => Proc(String, String)
 
     def initialize(@name : String)
     end
@@ -40,9 +40,14 @@ class AnonymizationConfig
       @replace_value[field.to_s] = with_value
     end
 
-    def replace(field : Symbol, &block : Db::Value -> String)
+    def replace(field : Symbol, &block : String -> String)
       @default = false
       @replace_proc[field.to_s] = block
+    end
+
+    def remove(field : Symbol)
+      @default = false
+      @replace_value[field.to_s] = nil
     end
   end
 end

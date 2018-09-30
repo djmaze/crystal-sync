@@ -30,15 +30,13 @@ class Db
   end
 
   def query(sql, *args) : Db::Result
-    @db.query(sql, *args) do |rs|
-      return Db::Result.new(rs, nil)
-    end
+    rs = @db.query(sql, *args)
+    return Db::Result.new(rs, nil)
   end
 
   def query(sql, table : Db::Table, *args) : Db::Result
-    @db.query(sql, *args) do |rs|
-      return Db::Result.new(rs, table)
-    end
+    rs = @db.query(sql, *args)
+    return Db::Result.new(rs, table)
   end
 
   def exec(sql, *args)
@@ -47,11 +45,11 @@ class Db
 
   def in_serializable_transaction(&block)
     transaction do
-      exec "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE, READ ONLY, DEFERRABLE"
+      exec "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE, READ ONLY"    # FIXME DEFERRABLE needed for Postgres?
       yield
     end
   end
 
-  delegate :tables, :clear!, :dump_schema, :escape_table_name, :get_array_fields, :load_schema, :defer_fk_constraints, :offset_sql, :placeholder_type, :primary_key_for_table, to: @driver
+  delegate :tables, :clear!, :dump_schema, :escape_table_name, :get_array_fields, :load_schema, :defer_fk_constraints, :offset_sql, :placeholder_type, :table_as_csv, :table_from_csv, to: @driver
   delegate :transaction, :uri, to: @db
 end

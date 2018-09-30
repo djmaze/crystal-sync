@@ -6,12 +6,21 @@ class DeserializedData
 
     while (table_name_or_eof = parser.read) != "EOF"
       table_name = table_name_or_eof.as(String)
-      columns = parser.read.as(Array(MessagePack::Type))
-      rows = parser.read.as(Array(MessagePack::Type))
-      yield new(table_name, columns, rows)
+      columns = parser.read
+        .as(Array(MessagePack::Type))
+        .map &.to_s
+      rows = parser.read
+        .as(Array(MessagePack::Type))
+        .map do |row|
+          row
+            .as(Array)
+            .map {|col| col.to_s}
+        end
+
+      yield new(table_name, columns.map(&.to_s), rows)
     end
   end
 
-  def initialize(@table_name : String, @columns : Array(MessagePack::Type), @rows : Array(MessagePack::Type))
+  def initialize(@table_name : String, @columns : Array(String), @rows : Array(Array(String)))
   end
 end
