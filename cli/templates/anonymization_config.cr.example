@@ -1,3 +1,4 @@
+require "crystal-sync/runner"
 require "faker"
 
 AnonymizationConfig.define do
@@ -17,3 +18,5 @@ AnonymizationConfig.define do
   #   end
   # end
 end
+
+CrystalSync::Runner.run

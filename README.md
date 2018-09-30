@@ -1,14 +1,49 @@
-# crystal-sync
+# Crystal-Sync
 
-TODO: Write a description here
+Crystal-Sync is a tool for efficiently transmitting database dumps, optionally including anonymization for table data.
+
+It follows the UNIX philosophy and is split into **dump** and **load** commands. These can be used independently from one another.
+
+The anonymization config needs to be supplied using a DSL written in the [Crystal](http://crystal-lang.org/) language.
+
+Under the hood, the tool dumps and loads the database schema and data using the official client tools for each database. The data is efficiently transmitted using a custom [MessagePack](https://msgpack.org/) format.
+
+Currently, PostgreSQL and MySQL databases are supported.
 
 ## Installation
 
-TODO: Write installation instructions here
+On the system generating the configuration, you need to have [Crystal](http://crystal-lang.org/) 0.26.1 installed.
+
+* Clone this repository
+* Compile the CLI:
+
+  ```bash
+  cd cli
+  shards build
+  ```
+* The resulting binary can now be found at `bin/crystal-sync_cli` inside the `cli` subdirectory.
 
 ## Usage
 
-TODO: Write usage instructions here
+The CLI is just a generator for a Crystal project with an empty anonymization config.
+
+Complete example:
+
+```bash
+# Generate a new configuration
+cd cli
+bin/crystal-sync_cli generate /path/to/a/new/folder
+
+# Compile the new configuration
+cd /path/to/a/new/folder
+shards build
+
+# Run the resulting binary
+bin/crystal-sync dump [...]
+bin/crystal-sync load [...]
+```
+
+See the [CLI README](cli/README.md) for further instructions.
 
 ## Development
 
@@ -24,4 +59,4 @@ TODO: Write development instructions here
 
 ## Contributors
 
-- [[your-github-name]](https://github.com/[your-github-name]) Martin Honermeyer - creator, maintainer
+- [[djmaze]](https://github.com/djmaze) Martin Honermeyer - creator, maintainer
