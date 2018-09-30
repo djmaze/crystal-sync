@@ -1,9 +1,8 @@
-require "./crystal-sync/*"
-require "../config/anonymization_config"
+require "./*"
 
 require "admiral"
 
-class CrystalSync < Admiral::Command
+class CrystalSync::Runner < Admiral::Command
   define_help
 
   def run
@@ -117,5 +116,3 @@ class CrystalSync < Admiral::Command
   register_sub_command :dump, DumpCommand
   register_sub_command :load, LoadCommand
 end
-
-CrystalSync.run
