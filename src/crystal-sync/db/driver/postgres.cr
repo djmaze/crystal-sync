@@ -1,10 +1,14 @@
 require "pg"
 
 class Db::Driver::Postgres < Db::Driver
-  @schema : String
+  getter schema : String
 
-  def initialize(@db : Db)
-    @schema = @db.schema || "public"
+  def initialize(@db : Db, schema : String?)
+    @schema = schema || default_schema
+  end
+
+  def default_schema
+    "public"
   end
 
   def tables
@@ -39,11 +43,11 @@ class Db::Driver::Postgres < Db::Driver
       # FIXME Deferring constraints does somehow not work, disabling all triggers instead
       #@db.exec "SET CONSTRAINTS ALL DEFERRED"
       tables.each do |table|
-        @db.exec "ALTER TABLE #{@schema}.#{table.escaped_name} DISABLE TRIGGER ALL;"
+        @db.exec "ALTER TABLE #{table.escaped_name} DISABLE TRIGGER ALL;"
       end
       yield
       tables.each do |table|
-        @db.exec "ALTER TABLE #{@schema}.#{table.escaped_name} ENABLE TRIGGER ALL;"
+        @db.exec "ALTER TABLE #{table.escaped_name} ENABLE TRIGGER ALL;"
       end
     end
   end
@@ -94,7 +98,12 @@ class Db::Driver::Postgres < Db::Driver
 
   def table_from_csv(table_name : String) : IO
     read, write = IO.pipe
-    Process.new("/bin/sh", ["-c", "psql #{@db.uri} -c \"COPY #{@schema}.#{table_name} FROM STDIN WITH (FORMAT csv, HEADER true, NULL '\\N')\""], input: read, error: STDERR)
+    Process.new(
+      "psql #{@db.uri} -a -c \"COPY #{table_name} FROM STDIN WITH (FORMAT csv, HEADER true, NULL '\\N')\"",
+      shell: true,
+      input: read,
+      error: STDERR
+    )
     write
   end
 

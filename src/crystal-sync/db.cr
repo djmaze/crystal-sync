@@ -7,19 +7,18 @@ require "./db/*"
 class Db
   @db : DB::Database
   @driver : Db::Driver
-  getter schema : String | Nil
 
   def initialize(url)
     uri = URI.parse(url)
     params = HTTP::Params.parse(uri.query || "")
-    @schema = params.delete("schema") if params.has_key?("schema")
+    schema = params.delete("schema") if params.has_key?("schema")
     uri.query = params.empty? ? nil : params.to_s
 
     @db = DB.open uri.to_s
 
     @driver = Db::Driver::None.new
     @driver = case @db.driver
-      when PG::Driver then Db::Driver::Postgres.new(self)
+      when PG::Driver then Db::Driver::Postgres.new(self, schema: schema)
       when MySql::Driver then Db::Driver::MySql.new(self)
       else raise "Unsupported driver #{@db.driver}"
     end
@@ -49,6 +48,10 @@ class Db
     @db.exec(sql, *args)
   end
 
+  def table_name_with_schema(table_name)
+    [schema, table_name].compact.join(".")
+  end
+
   def in_serializable_transaction(&block)
     transaction do
       exec "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE, READ ONLY"    # FIXME DEFERRABLE needed for Postgres?
@@ -56,6 +59,6 @@ class Db
     end
   end
 
-  delegate :tables, :clear!, :dump_schema, :escape_table_name, :get_array_fields, :load_schema, :defer_fk_constraints, :offset_sql, :placeholder_type, :table_as_csv, :table_from_csv, to: @driver
+  delegate :schema, :default_schema, :tables, :clear!, :dump_schema, :escape_table_name, :get_array_fields, :load_schema, :defer_fk_constraints, :offset_sql, :placeholder_type, :table_as_csv, :table_from_csv, to: @driver
   delegate :transaction, :uri, to: @db
 end

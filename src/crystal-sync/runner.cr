@@ -62,6 +62,7 @@ class CrystalSync::Runner < Admiral::Command
     include DbHelpers
 
     define_argument database_url : String, required: true, description: "target database URL"
+    define_flag target_schema, default: nil, description: "target schema for tables"
     define_help short: h, description: "Loads a database dump from a crystal-sync dump."
 
     def run
@@ -73,17 +74,29 @@ class CrystalSync::Runner < Admiral::Command
       input = STDIN
 
       Db.new arguments.database_url do |db|
-        STDERR.puts "Recreating empty target database"
+        STDERR.puts "Recreating empty target schema #{db.schema}"
         db.clear!
       end
 
       Db.new arguments.database_url do |db|
         STDERR.puts "Loading schema"
         packer = MessagePack::Unpacker.new(input)
-        buffer = IO::Memory.new 1024
-        buffer.write packer.read_string.to_slice
-        buffer.rewind
-        db.load_schema(buffer)
+        input_buffer = IO::Memory.new 1024
+        input_buffer.write packer.read_string.to_slice
+        input_buffer.rewind
+        if db.schema != db.default_schema
+          output_buffer = IO::Memory.new 10*1024
+          Process.run(
+            %Q(sed s/#{db.default_schema}\./#{db.schema}./),
+            shell: true,
+            input: input_buffer,
+            output: output_buffer
+          )
+          output_buffer.rewind
+        else
+          output_buffer = input_buffer
+        end
+        db.load_schema(output_buffer)
 
         STDERR.puts "Loading data"
 
@@ -92,13 +105,13 @@ class CrystalSync::Runner < Admiral::Command
           last_table_name = ""
           current_loader : (DataLoader | Nil) = nil
           DeserializedData.from_msgpack(input) do |deserialized|
-            table_name = deserialized.table_name
-            if table_name != last_table_name
+            target_table_name = db.table_name_with_schema(deserialized.table_name)
+            if deserialized.table_name != last_table_name
               STDERR.printf "\nLoading table #{deserialized.table_name}"
               STDERR.flush
-              last_table_name = table_name
+              last_table_name = deserialized.table_name
               current_loader.done if current_loader
-              current_loader = DataLoader.new(db, table_name, deserialized.columns)
+              current_loader = DataLoader.new(db, target_table_name, deserialized.columns)
             end
 
             STDERR.printf(".")

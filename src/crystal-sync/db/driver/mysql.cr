@@ -6,6 +6,9 @@ class Db::Driver::MySql < Db::Driver
   def initialize(@db : Db)
   end
 
+  def schema; nil; end
+  def default_schema; nil; end
+
   def tables
     sql = "SHOW FULL TABLES WHERE TABLE_TYPE != 'VIEW'"
     result = @db.query(sql)

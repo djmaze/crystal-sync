@@ -1,4 +1,6 @@
 class Db::Driver::None < Db::Driver
+  def schema; nil; end
+  def default_schema; nil; end
   def tables; [Db::Table.new(Db.new("dummy") {}, "")]; end
   def clear!; end
   def dump_schema : IO::Memory; IO::Memory.new(0); end
