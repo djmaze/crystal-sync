@@ -112,6 +112,8 @@ class Db::Driver::Postgres < Db::Driver
   end
 
   private def dump_sequences(buffer : IO)
+    return if sequences.none?
+
     table_args = sequences.map do |sequence|
       "-t #{sequence}"
     end.join(" ")
