@@ -87,7 +87,7 @@ class CrystalSync::Runner < Admiral::Command
         if db.schema != db.default_schema
           output_buffer = IO::Memory.new 10*1024
           Process.run(
-            %Q(sed s/#{db.default_schema}\./#{db.schema}./),
+            %Q(sed "s/'#{db.default_schema}\./'#{db.schema}\./g; s/ #{db.default_schema}\./ #{db.schema}\./g"),
             shell: true,
             input: input_buffer,
             output: output_buffer
