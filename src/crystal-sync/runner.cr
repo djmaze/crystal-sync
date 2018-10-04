@@ -81,22 +81,16 @@ class CrystalSync::Runner < Admiral::Command
       Db.new arguments.database_url do |db|
         STDERR.puts "Loading schema"
         packer = MessagePack::Unpacker.new(input)
-        input_buffer = IO::Memory.new 1024
-        input_buffer.write packer.read_string.to_slice
-        input_buffer.rewind
+        sql = packer.read_string
+
+        output_buffer = IO::Memory.new 1024
         if db.schema != db.default_schema
-          output_buffer = IO::Memory.new 10*1024
-          Process.run(
-            %Q(sed "s/'#{db.default_schema}\./'#{db.schema}\./g; s/ #{db.default_schema}\./ #{db.schema}\./g"),
-            shell: true,
-            input: input_buffer,
-            output: output_buffer,
-            error: STDERR
-          )
-          output_buffer.rewind
+          output_buffer.write sql.gsub(/([ '])#{db.default_schema}/, "\\1#{db.schema}").to_slice
         else
-          output_buffer = input_buffer
+          output_buffer.write sql.to_slice
         end
+        output_buffer.rewind
+
         db.load_schema(output_buffer)
 
         STDERR.puts "Loading data"
