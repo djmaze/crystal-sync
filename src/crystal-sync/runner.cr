@@ -90,7 +90,8 @@ class CrystalSync::Runner < Admiral::Command
             %Q(sed "s/'#{db.default_schema}\./'#{db.schema}\./g; s/ #{db.default_schema}\./ #{db.schema}\./g"),
             shell: true,
             input: input_buffer,
-            output: output_buffer
+            output: output_buffer,
+            error: STDERR
           )
           output_buffer.rewind
         else
