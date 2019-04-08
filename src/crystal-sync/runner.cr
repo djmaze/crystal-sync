@@ -81,7 +81,7 @@ class CrystalSync::Runner < Admiral::Command
 
       Db.new arguments.database_url do |db|
         STDERR.puts "Loading schema"
-        packer = MessagePack::Unpacker.new(input)
+        packer = MessagePack::IOUnpacker.new(input)
         sql = packer.read_string
 
         output_buffer = IO::Memory.new 1024

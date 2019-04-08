@@ -2,7 +2,7 @@ class DeserializedData
   getter :table_name, :columns, :rows
 
   def self.from_msgpack(string_or_io)
-    parser = MessagePack::Unpacker.new(string_or_io)
+    parser = MessagePack::IOUnpacker.new(string_or_io)
 
     while (table_name_or_eof = parser.read) != "EOF"
       table_name = table_name_or_eof.as(String)
