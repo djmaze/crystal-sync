@@ -1,6 +1,6 @@
 require "./spec_helper"
 
-describe Crystal::Sync do
+describe CrystalSync do
   # TODO: Write tests
 
   it "works" do
