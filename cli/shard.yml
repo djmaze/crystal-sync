@@ -8,7 +8,7 @@ targets:
   crystal-sync_cli:
     main: src/cli.cr
 
-crystal: 0.26.1
+crystal: 0.27.2
 
 license: MIT
 

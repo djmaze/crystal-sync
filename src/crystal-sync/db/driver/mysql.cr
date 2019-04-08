@@ -1,5 +1,3 @@
-require "tempfile"
-
 require "mysql"
 
 class Db::Driver::MySql < Db::Driver
@@ -91,8 +89,8 @@ class Db::Driver::MySql < Db::Driver
     "--host=#{@db.uri.host} --user=#{@db.uri.user} --password=#{@db.uri.password} --port=#{@db.uri.port || 3306}"
   end
 
-  private def create_fifo : Tempfile
-    Tempfile.open("crystal-sync", "fifo") do |fifo|
+  private def create_fifo : File
+    File.tempfile("crystal-sync", "fifo") do |fifo|
       fifo.delete
       `mkfifo -m 0600 #{fifo.path}`
       at_exit { fifo.delete }

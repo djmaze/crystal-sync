@@ -1,6 +1,7 @@
 require "./*"
 
 require "admiral"
+require "uri"
 
 class CrystalSync::Runner < Admiral::Command
   define_help
