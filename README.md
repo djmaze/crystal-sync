@@ -12,7 +12,7 @@ Currently, PostgreSQL and MySQL databases are supported.
 
 ## Installation
 
-On the system generating the configuration, you need to have [Crystal](http://crystal-lang.org/) 0.26.1 installed.
+On the system generating the configuration, you need to have [Crystal](http://crystal-lang.org/) 0.27.2 installed.
 
 * Clone this repository
 * Compile the CLI:

@@ -6,7 +6,7 @@ This directory contains a anonymization configuration for [crystal-sync](https:/
 
 On the machine generating the binary:
 
-* [Crystal](https://crystal-lang.org/) (currently: 0.26.1) needs to be installed
+* [Crystal](https://crystal-lang.org/) (currently: 0.27.2) needs to be installed
 
 On the machine running the resulting `crystal-sync` binary:
 
