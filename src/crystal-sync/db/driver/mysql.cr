@@ -82,7 +82,7 @@ class Db::Driver::MySql < Db::Driver
 
   def table_from_csv(table_name : String) : IO
     fifo = create_fifo
-    sql_command = %Q(LOAD DATA LOCAL INFILE '#{fifo.path}' INTO TABLE #{table_name} FIELDS TERMINATED BY \',\' ENCLOSED BY \'\\"\' LINES TERMINATED BY \'\\n\' IGNORE 1 LINES)
+    sql_command = %Q(LOAD DATA LOCAL INFILE '#{fifo.path}' INTO TABLE #{table_name} CHARACTER SET 'utf8mb4' FIELDS TERMINATED BY \',\' ENCLOSED BY \'\\"\' LINES TERMINATED BY \'\\n\' IGNORE 1 LINES)
     Process.new("/bin/sh",
                 ["-c", "mysql --batch #{mysql_conn_opts} #{@db.name} -e \"#{sql_command}\""],
                 env: {"MYSQL_PWD" => @db.uri.password},
