@@ -44,7 +44,7 @@ struct Db::Value
     @array_value = array
   end
 
-  def initialize(value : Array(PG::BoolArray) | Array(PG::CharArray) | Array(PG::Float32Array) | Array(PG::Float64Array) | Array(PG::Int16Array) | Array(PG::Int32Array) | Array(PG::Int64Array) | Array(PG::StringArray) | JSON::Any | PG::Geo::Box | PG::Geo::Circle | PG::Geo::Line | PG::Geo::LineSegment | PG::Geo::Path | PG::Geo::Path | PG::Geo::Point | PG::Geo::Polygon | PG::Numeric | Time::Span)
+  def initialize(value : Array(PG::BoolArray) | Array(PG::CharArray) | Array(PG::Float32Array) | Array(PG::Float64Array) | Array(PG::Int16Array) | Array(PG::Int32Array) | Array(PG::Int64Array) | Array(PG::NumericArray) | Array(PG::StringArray) | Array(PG::TimeArray) | JSON::Any | PG::Geo::Box | PG::Geo::Circle | PG::Geo::Line | PG::Geo::LineSegment | PG::Geo::Path | PG::Geo::Path | PG::Geo::Point | PG::Geo::Polygon | PG::Numeric | Time::Span)
     raise "DB value type not supported: #{value} #{value.class}"
   end
 
