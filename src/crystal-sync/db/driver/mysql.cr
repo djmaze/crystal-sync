@@ -28,6 +28,7 @@ class Db::Driver::MySql < Db::Driver
                 ["-c",
                  "mysqldump #{mysql_conn_opts} --no-data #{@db.name}"
                 ],
+                env: {"MYSQL_PWD" => @db.uri.password},
                 error: STDERR, output: buffer)
     buffer.rewind
     buffer
@@ -38,6 +39,7 @@ class Db::Driver::MySql < Db::Driver
                 ["-c",
                  "mysql #{mysql_conn_opts} #{@db.name}"
                 ],
+                env: {"MYSQL_PWD" => @db.uri.password},
                 input: schema_buffer, error: STDERR)
   end
 
@@ -81,12 +83,15 @@ class Db::Driver::MySql < Db::Driver
   def table_from_csv(table_name : String) : IO
     fifo = create_fifo
     sql_command = %Q(LOAD DATA LOCAL INFILE '#{fifo.path}' INTO TABLE #{table_name} FIELDS TERMINATED BY \',\' ENCLOSED BY \'\\"\' LINES TERMINATED BY \'\\n\' IGNORE 1 LINES)
-    Process.new("/bin/sh", ["-c", "mysql --batch #{mysql_conn_opts} #{@db.name} -e \"#{sql_command}\""], error: STDERR, output: STDOUT)
+    Process.new("/bin/sh",
+                ["-c", "mysql --batch #{mysql_conn_opts} #{@db.name} -e \"#{sql_command}\""],
+                env: {"MYSQL_PWD" => @db.uri.password},
+                error: STDERR, output: STDOUT)
     File.open(fifo.path, "w")
   end
 
   private def mysql_conn_opts
-    "--host=#{@db.uri.host} --user=#{@db.uri.user} --password=#{@db.uri.password} --port=#{@db.uri.port || 3306}"
+    "--host=#{@db.uri.host} --user=#{@db.uri.user} --port=#{@db.uri.port || 3306}"
   end
 
   private def create_fifo : File
