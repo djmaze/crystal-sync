@@ -2,13 +2,13 @@ class RowAnonymizer
   def initialize(@table : Db::Table, @config : AnonymizationConfig::TableConfig)
   end
 
-  def anonymize_rows(columns, rows) : Array(Array(String))
+  def anonymize_rows(columns, rows) : Array(Array(String | Nil))
     rows.map do |row|
       anonymize_row(columns, row)
     end
   end
 
-  def anonymize_row(columns, row) : Array(String)
+  def anonymize_row(columns, row) : Array(String | Nil)
     if @config.default?
       row
     else

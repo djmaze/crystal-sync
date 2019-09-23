@@ -73,6 +73,10 @@ struct Db::Value
     value.to_s
   end
 
+  def empty?
+    value.nil?
+  end
+
   def to_msgpack(packer : MessagePack::Packer)
     case @kind
     when :string then @string_value.to_msgpack(packer)

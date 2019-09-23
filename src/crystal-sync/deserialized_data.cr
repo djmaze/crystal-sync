@@ -14,13 +14,15 @@ class DeserializedData
         .map do |row|
           row
             .as(Array)
-            .map {|col| col.to_s}
+            .map do |col|
+              col.to_s if col
+            end
         end
 
       yield new(table_name, columns.map(&.to_s), rows)
     end
   end
 
-  def initialize(@table_name : String, @columns : Array(String), @rows : Array(Array(String)))
+  def initialize(@table_name : String, @columns : Array(String), @rows : Array(Array(String | Nil)))
   end
 end

@@ -23,10 +23,12 @@ class Db::Table
     @db.table_as_csv(@name) do |csv|
       done = false
       0.step(by: LIMIT) do |offset|
-        rows = Array(Array(String)).new(LIMIT)
+        rows = Array(Array(String | Nil)).new(LIMIT)
         LIMIT.times do
           if csv.next && (values = csv.row.to_a).any?
-            rows << values.not_nil!.map(&.to_s)
+            rows << values.not_nil!.map do |value|
+              value.empty? ? nil : value.to_s
+            end
           else
             done = true
           end
