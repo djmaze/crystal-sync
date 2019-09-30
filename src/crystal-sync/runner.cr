@@ -29,6 +29,7 @@ class CrystalSync::Runner < Admiral::Command
       end
 
       output = STDOUT
+      STDERR.sync = true
 
       config = AnonymizationConfig.instance
       anonymizer = Anonymizer.new(config)
@@ -73,6 +74,7 @@ class CrystalSync::Runner < Admiral::Command
       end
 
       input = STDIN
+      STDERR.sync = true
 
       Db.new arguments.database_url do |db|
         STDERR.puts "Recreating empty target schema #{db.schema}"
@@ -104,14 +106,12 @@ class CrystalSync::Runner < Admiral::Command
             target_table_name = db.table_name_with_schema(deserialized.table_name)
             if deserialized.table_name != last_table_name
               STDERR.printf "\nLoading table #{deserialized.table_name}"
-              STDERR.flush
               last_table_name = deserialized.table_name
               current_loader.done if current_loader
               current_loader = DataLoader.new(db, target_table_name, deserialized.columns)
             end
 
             STDERR.printf(".")
-            STDERR.flush
             current_loader.not_nil!.load(deserialized)
           end
           current_loader.try &.done
