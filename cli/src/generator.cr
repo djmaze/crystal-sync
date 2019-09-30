@@ -19,6 +19,7 @@ class CrystalSync::Generator
     create_folder
     write_shards_file
     add_config_file
+    add_dockerfile
     add_readme_file
     write_gitignore
     compile_project
@@ -54,6 +55,13 @@ class CrystalSync::Generator
     FileUtils.cp(
       File.join(template_path, "anonymization_config.cr.example"),
       config_path
+    )
+  end
+
+  private def add_dockerfile
+    FileUtils.cp(
+      File.join(template_path, "Dockerfile"),
+      File.join(project_dir, "Dockerfile")
     )
   end
 
