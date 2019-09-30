@@ -24,23 +24,30 @@ class Db::Driver::MySql < Db::Driver
 
   def dump_schema : IO::Memory
     buffer = IO::Memory.new(10*1024)
-    Process.run("/bin/sh",
+    status = Process.run("/bin/sh",
                 ["-c",
                  "mysqldump #{mysql_conn_opts} --no-data #{@db.name}"
                 ],
                 env: {"MYSQL_PWD" => @db.uri.password},
                 error: STDERR, output: buffer)
-    buffer.rewind
-    buffer
+    if status.success?
+      buffer.rewind
+      buffer
+    else
+      raise "Fatal: mysqldump exited with code #{status.exit_code}"
+    end
   end
 
   def load_schema(schema_buffer : IO)
-    Process.run("/bin/sh",
+    status = Process.run("/bin/sh",
                 ["-c",
                  "mysql #{mysql_conn_opts} #{@db.name}"
                 ],
                 env: {"MYSQL_PWD" => @db.uri.password},
                 input: schema_buffer, error: STDERR)
+    unless status.success?
+      raise "Fatal: mysql exited with code #{status.exit_code}"
+    end
   end
 
   def defer_fk_constraints(&block)
