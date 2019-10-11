@@ -14,8 +14,10 @@ dependencies:
     branch: master
   faker:
     github: askn/faker
+    version: 0.2.0
   msgpack:
     github: crystal-community/msgpack-crystal
+    version: ~> 0.14.2
   mysql:
     github: crystal-lang/crystal-mysql
   pg:
