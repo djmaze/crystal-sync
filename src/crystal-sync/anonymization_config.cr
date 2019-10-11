@@ -25,7 +25,7 @@ class AnonymizationConfig
     getter? default = true
     getter? truncate = false
     getter replace_value = {} of String => String?
-    getter replace_proc = {} of String => Proc((String | Nil), String)
+    getter replace_proc = {} of String => Proc(String, String)
 
     def initialize(@name : String)
     end

@@ -16,7 +16,8 @@ class RowAnonymizer
         if (val = @config.replace_value[column]?)
           val
         elsif (proc = @config.replace_proc[column]?)
-          proc.call row[i]
+          # FIXME This should work with nil values as well
+          proc.call row[i].not_nil! if row[i]
         else
           row[i]
         end
