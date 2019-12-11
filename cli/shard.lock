@@ -2,5 +2,5 @@ version: 1.0
 shards:
   admiral:
     github: djmaze/admiral.cr
-    commit: c71ce9673f38f0471fa336124d79e8cff4d1c887
+    commit: cc2e9626b7891bdba254bcd55b1dca9a57891fc5
 

@@ -2,7 +2,7 @@ version: 1.0
 shards:
   admiral:
     github: djmaze/admiral.cr
-    commit: 562984714fbdb1c0444b0c22d1e037346c7e074b
+    commit: cc2e9626b7891bdba254bcd55b1dca9a57891fc5
 
   db:
     github: crystal-lang/crystal-db
