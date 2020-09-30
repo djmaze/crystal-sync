@@ -6,7 +6,7 @@ shards:
 
   db:
     github: crystal-lang/crystal-db
-    version: 0.7.0
+    version: 0.9.0
 
   faker:
     github: askn/faker
@@ -18,9 +18,9 @@ shards:
 
   mysql:
     github: crystal-lang/crystal-mysql
-    version: 0.9.0
+    version: 0.11.2
 
   pg:
     github: will/crystal-pg
-    version: 0.19.0
+    version: 0.21.1
 
