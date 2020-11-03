@@ -2,7 +2,10 @@ version: "3.4"
 
 services:
   app_postgres:
-    build: .
+    build:
+      context: .
+      dockerfile: cli/templates/Dockerfile
+    image: mazzolino/crystal-sync
     entrypoint: bash
     command: -c "crystal-sync dump postgres://postgres:postgres@postgres1/postgres | crystal-sync load postgres://postgres:postgres@postgres2/postgres"
     volumes:
@@ -14,7 +17,10 @@ services:
       - postgres2
 
   app_mysql:
-    build: .
+    build:
+      context: .
+      dockerfile: cli/templates/Dockerfile
+    image: mazzolino/crystal-sync
     entrypoint: bash
     command: -c "crystal-sync dump mysql://root:secret@mysql1/sync | crystal-sync load mysql://root:secret@mysql2/sync"
     volumes:

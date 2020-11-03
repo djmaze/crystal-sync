@@ -8,6 +8,10 @@ crystal: 0.34.0
 
 license: MIT
 
+targets: 
+  crystal-sync:
+    main: anonymization_config.cr
+
 dependencies:
   admiral:
     github: djmaze/admiral.cr
