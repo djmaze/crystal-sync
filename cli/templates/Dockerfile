@@ -1,4 +1,4 @@
-FROM crystallang/crystal:0.34.0 AS builder
+FROM crystallang/crystal:0.36.1 AS builder
 
 WORKDIR /usr/src/app
 
