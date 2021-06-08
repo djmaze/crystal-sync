@@ -121,7 +121,12 @@ class Db::Driver::Postgres < Db::Driver
   end
 
   private def sequences
-    sql = "SELECT sequence_name FROM INFORMATION_SCHEMA.SEQUENCES WHERE sequence_schema = '#{@schema}' ORDER BY sequence_name;"
+    sql = "SELECT c.relname as sequence_name
+      FROM pg_class c
+      JOIN pg_namespace n ON n.oid = c.relnamespace
+      JOIN pg_user u ON u.usesysid = c.relowner
+      WHERE c.relkind = 'S' AND n.nspname = '#{@schema}'
+      ORDER BY sequence_name;"
     result = @db.query(sql)
     begin
       result.rows.map { |row| row[0].value.to_s }
