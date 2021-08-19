@@ -15,7 +15,7 @@ class Db::Driver::Postgres < Db::Driver
     sql = "SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = '#{@schema}' ORDER BY table_name;"
     result = @db.query(sql)
     begin
-      result.rows.map { |row| Db::Table.new(@db, row[0].value.to_s) }
+      result.rows.map { |row| STDERR.puts row[0].value.to_s; STDERR.flush; Db::Table.new(@db, row[0].value.to_s) }
     ensure
       result.close
     end
@@ -124,7 +124,6 @@ class Db::Driver::Postgres < Db::Driver
     sql = "SELECT c.relname as sequence_name
       FROM pg_class c
       JOIN pg_namespace n ON n.oid = c.relnamespace
-      JOIN pg_user u ON u.usesysid = c.relowner
       WHERE c.relkind = 'S' AND n.nspname = '#{@schema}'
       ORDER BY sequence_name;"
     result = @db.query(sql)
