@@ -67,6 +67,7 @@ class Db::Driver::Postgres < Db::Driver
         when "_varchar", "_text" then array_fields[name.to_s] = :string
         when "_timestamptz" then array_fields[name.to_s] = :time
         when "_float8" then array_fields[name.to_s]  = :float
+        when "_int4" then array_fields[name.to_s] = :int
         else raise "Unsupported array type #{type.value}"
         end
       end

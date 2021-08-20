@@ -24,6 +24,8 @@ class Db::Result
             case array_type
             when :string then @result.rs.read(Array(String))
             when :time then @result.rs.read(Array(String))  # FIXME This might be wrong
+            when :float then @result.rs.read(Array(Float64))
+            when :int then @result.rs.read(Array(Int64))
             else "unsupported array type #{array_type}"
             end
           else
