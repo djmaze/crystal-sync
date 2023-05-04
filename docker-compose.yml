@@ -6,8 +6,9 @@ services:
       context: .
       dockerfile: cli/templates/Dockerfile
     image: mazzolino/crystal-sync
-    entrypoint: bash
-    command: -c "crystal-sync dump postgres://postgres:postgres@postgres1/postgres | crystal-sync load postgres://postgres:postgres@postgres2/postgres"
+    entrypoint: sh
+    command: -c "crystal-sync dump postgres://postgres:postgres@postgres1/postgres | crystal-sync load postgres://postgres:postgres@postgres2/postgres?schema=test"
+    working_dir: /usr/src/app
     volumes:
       - .:/usr/src/app
     networks:
@@ -21,8 +22,9 @@ services:
       context: .
       dockerfile: cli/templates/Dockerfile
     image: mazzolino/crystal-sync
-    entrypoint: bash
+    entrypoint: sh
     command: -c "crystal-sync dump mysql://root:secret@mysql1/sync | crystal-sync load mysql://root:secret@mysql2/sync"
+    working_dir: /usr/src/app
     volumes:
       - .:/usr/src/app
     networks:

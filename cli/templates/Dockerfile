@@ -1,22 +1,17 @@
-FROM crystallang/crystal:0.36.1 AS builder
+FROM crystallang/crystal:1.8.1-alpine-build AS builder
 
 WORKDIR /usr/src/app
 
 COPY shard.* ./
 RUN shards install
 
-COPY . ./
+COPY anonymization_config.cr ./
+COPY src ./src
 RUN shards build --release --static
 
-FROM ubuntu:20.04
+FROM alpine:3.17
 
-RUN apt-get update \
- && apt-get -y install postgresql-client \
- && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-RUN apt-get update \
- && apt-get -y install mysql-client \
- && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+RUN apk add --no-cache mysql-client postgresql-client
 
 COPY --from=builder /usr/src/app/bin/crystal-sync /usr/local/bin/
 
