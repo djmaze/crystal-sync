@@ -11,6 +11,7 @@ class DeserializedData
         .map &.to_s
       rows = parser.read
         .as(Array(MessagePack::Type))
+        .select { |row| ! row.is_a? UInt8 }
         .map do |row|
           row
             .as(Array)
