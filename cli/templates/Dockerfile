@@ -11,7 +11,7 @@ RUN shards build --release --static
 
 FROM alpine:3.17
 
-RUN apk add --no-cache mysql-client postgresql-client
+RUN apk add --no-cache curl mysql-client postgresql-client
 
 COPY --from=builder /usr/src/app/bin/crystal-sync /usr/local/bin/
 
