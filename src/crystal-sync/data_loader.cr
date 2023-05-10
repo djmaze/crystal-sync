@@ -1,9 +1,10 @@
 class DataLoader
   @table_buffer : IO
+  @process: Process
 
   def initialize(@db : Db, @table_name : String, columns : Array(String))
     @i = 0
-    @table_buffer = @db.table_from_csv(table_name)
+    @table_buffer, @process = @db.table_from_csv(table_name)
     @csv = NullableCSVBuilder.new(@table_buffer)
     @csv.row columns
   end
@@ -16,6 +17,7 @@ class DataLoader
 
   def done
     @table_buffer.close
+    @process.wait
   end
 
   private def placeholder
