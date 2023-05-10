@@ -11,5 +11,5 @@ class Db::Driver::None < Db::Driver
   def placeholder_type; PlaceholderType::Questionmark; end
   def escape_table_name(name : String) : String; ""; end
   def table_as_csv(table_name : String, &block); end
-  def table_from_csv(table_name : String) : IO; IO::Memory.new; end
+  def table_from_csv(table_name : String) : {IO, Process}; return IO::Memory.new, Process.new("echo"); end
 end

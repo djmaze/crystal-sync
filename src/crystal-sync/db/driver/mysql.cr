@@ -87,14 +87,15 @@ class Db::Driver::MySql < Db::Driver
     end
   end
 
-  def table_from_csv(table_name : String) : IO
+  def table_from_csv(table_name : String) : {IO, Process}
     fifo = create_fifo
     sql_command = %Q(LOAD DATA LOCAL INFILE '#{fifo.path}' INTO TABLE #{table_name} CHARACTER SET 'utf8mb4' FIELDS TERMINATED BY \',\' ENCLOSED BY \'\\"\' LINES TERMINATED BY \'\\n\' IGNORE 1 LINES)
-    Process.new("/bin/sh",
+    process = Process.new("/bin/sh",
                 ["-c", "mysql --batch #{mysql_conn_opts} #{@db.name} -e \"#{sql_command}\""],
                 env: {"MYSQL_PWD" => @db.uri.password},
                 error: STDERR, output: STDOUT)
-    File.open(fifo.path, "w")
+
+    return File.open(fifo.path, "w"), process
   end
 
   private def mysql_conn_opts

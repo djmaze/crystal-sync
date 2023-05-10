@@ -97,15 +97,15 @@ class Db::Driver::Postgres < Db::Driver
     end
   end
 
-  def table_from_csv(table_name : String) : IO
+  def table_from_csv(table_name : String) : {IO, Process}
     read, write = IO.pipe
-    Process.new(
+    process = Process.new(
       "psql #{@db.uri} -a -c \"COPY #{table_name} FROM STDIN WITH (FORMAT csv, HEADER true, NULL '\\N')\"",
       shell: true,
       input: read,
       error: STDERR
     )
-    write
+    return write, process
   end
 
   private def dump_tables(buffer : IO)
