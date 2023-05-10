@@ -65,6 +65,7 @@ class CrystalSync::Runner < Admiral::Command
 
     define_argument database_url : String, required: true, description: "target database URL"
     define_flag target_schema, default: nil, description: "target schema for tables"
+    define_flag only_tables : Array(String), long: table, default: [] of String
     define_help short: h, description: "Loads a database dump from a crystal-sync dump."
 
     def run
@@ -98,15 +99,19 @@ class CrystalSync::Runner < Admiral::Command
 
         STDERR.puts "Loading data"
 
-        puts "Deferring foreign-key constraints"
+        STDERR.puts "Deferring foreign-key constraints"
         db.defer_fk_constraints do
           last_table_name = ""
           current_loader : (DataLoader | Nil) = nil
           DeserializedData.from_msgpack(input) do |deserialized|
+            next if !flags.only_tables.empty? && !flags.only_tables.includes?(deserialized.table_name)
+
             target_table_name = db.table_name_with_schema(deserialized.table_name)
+
             if deserialized.table_name != last_table_name
-              STDERR.printf "\nLoading table #{deserialized.table_name}"
               last_table_name = deserialized.table_name
+
+              STDERR.printf "\nLoading table #{deserialized.table_name}"
               current_loader.done if current_loader
               current_loader = DataLoader.new(db, target_table_name, deserialized.columns)
             end
