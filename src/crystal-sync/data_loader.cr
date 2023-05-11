@@ -5,7 +5,7 @@ class DataLoader
   def initialize(@db : Db, @table_name : String, columns : Array(String))
     @i = 0
     @table_buffer, @process = @db.table_from_csv(table_name)
-    @csv = NullableCSVBuilder.new(@table_buffer)
+    @csv = CSV::Builder.new(@table_buffer)
     @csv.row columns
   end
 
