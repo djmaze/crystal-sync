@@ -12,11 +12,16 @@ class DeserializedData
       rows = parser.read
         .as(Array(MessagePack::Type))
         .map do |row|
-          row
-            .as(Array)
-            .map do |col|
-              col.to_s if col
-            end
+          begin
+            row
+              .as(Array)
+              .map do |col|
+                col.to_s if col
+              end
+          rescue e
+            STDERR.puts row.inspect
+            raise e
+          end
         end
 
       yield new(table_name, columns.map(&.to_s), rows)
