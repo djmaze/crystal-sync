@@ -2,6 +2,7 @@ require "pg"
 
 class Db::Driver::Postgres < Db::Driver
   getter schema : String
+  getter snapshot : String?
 
   def initialize(@db : Db, schema : String?)
     @schema = schema || default_schema
@@ -9,6 +10,16 @@ class Db::Driver::Postgres < Db::Driver
 
   def default_schema
     "public"
+  end
+
+  def transaction(&block)
+    @db.exec("BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ")
+    begin
+      @snapshot = @db.scalar("SELECT pg_export_snapshot()").as(String)
+      yield
+    ensure
+      @db.exec("ROLLBACK")
+    end
   end
 
   def tables
@@ -29,13 +40,30 @@ class Db::Driver::Postgres < Db::Driver
   def dump_schema : IO::Memory
     buffer = IO::Memory.new(10*1024)
     dump_tables(buffer)
-    dump_sequences(buffer)
     buffer.rewind
     buffer
   end
 
   def load_schema(schema_buffer : IO)
     Process.run("/bin/sh", ["-c", "psql #{@db.uri}"], env: {"PATH" => ENV["PATH"]}, input: schema_buffer, error: STDERR)
+  end
+
+  def supports_sequences?
+    true
+  end
+
+  def dump_sequences : IO::Memory
+    buffer = IO::Memory.new(10*1024)
+
+    unless sequences.none?
+      table_args = sequences.map do |sequence|
+        "-t #{sequence}"
+      end.join(" ")
+      Process.run("/bin/sh", ["-c", "pg_dump --data-only --no-owner --no-privileges --snapshot #{@snapshot} -n #{@schema} #{table_args} #{@db.uri}"], error: STDERR, output: buffer)
+    end
+
+    buffer.rewind
+    buffer
   end
 
   def defer_fk_constraints(&block)
@@ -91,7 +119,10 @@ class Db::Driver::Postgres < Db::Driver
 
   def table_as_csv(table_name : String, &block)
     IO.pipe do |read, write|
-      Process.run("/bin/sh", ["-c", "psql #{@db.uri} -c \"COPY #{@schema}.#{table_name} TO STDOUT WITH (FORMAT csv, HEADER true, NULL '\\N')\"; echo \"\n\""], error: STDERR, output: write) do
+      sql = "BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+        SET TRANSACTION SNAPSHOT '#{@snapshot}';
+        COPY #{@schema}.#{table_name} TO STDOUT WITH (FORMAT csv, HEADER true, NULL '\\N');"
+      Process.run("/bin/sh", ["-c", "psql #{@db.uri} -q -c \"#{sql}\"; echo \"\n\""], error: STDERR, output: write) do
         yield CSV.new(read, headers: true)
       end
     end
@@ -110,15 +141,6 @@ class Db::Driver::Postgres < Db::Driver
 
   private def dump_tables(buffer : IO)
     Process.run("/bin/sh", ["-c", "pg_dump --schema-only --no-owner --no-privileges -n #{@schema} #{@db.uri}"], error: STDERR, output: buffer)
-  end
-
-  private def dump_sequences(buffer : IO)
-    return if sequences.none?
-
-    table_args = sequences.map do |sequence|
-      "-t #{sequence}"
-    end.join(" ")
-    Process.run("/bin/sh", ["-c", "pg_dump --data-only --no-owner --no-privileges -n #{@schema} #{table_args} #{@db.uri}"], error: STDERR, output: buffer)
   end
 
   private def sequences

@@ -39,16 +39,25 @@ class CrystalSync::Runner < Admiral::Command
         STDERR.puts "Dumping schema"
         packer.write db.dump_schema.gets_to_end
 
-        db.tables.each do |table|
-          if anonymizer.skip_table?(table.name)
-            STDERR.puts "Skipping #{table.name}"
-          else
-            records = table.count
-            STDERR.puts "\nDumping table #{table.name}: #{records} records"
+        tables = db.tables
 
-            if records > 0
-              table_anonymizer = anonymizer.for_table(table)
-              TableSerializer.new(table, anonymizer: table_anonymizer).to_msgpack(packer)
+        db.transaction do
+          if db.supports_sequences?
+            STDERR.puts "Dumping sequences"
+            packer.write db.dump_sequences.gets_to_end
+          end
+
+          tables.each do |table|
+            if anonymizer.skip_table?(table.name)
+              STDERR.puts "Skipping #{table.name}"
+            else
+              records = table.count
+              STDERR.puts "\nDumping table #{table.name}: #{records} records"
+
+              if records > 0
+                table_anonymizer = anonymizer.for_table(table)
+                TableSerializer.new(table, anonymizer: table_anonymizer).to_msgpack(packer)
+              end
             end
           end
         end
@@ -85,6 +94,7 @@ class CrystalSync::Runner < Admiral::Command
         STDERR.puts "Loading schema"
         packer = MessagePack::IOUnpacker.new(input)
         sql = packer.read_string
+        sql += packer.read_string if db.supports_sequences?
 
         output_buffer = IO::Memory.new 1024
         if db.schema != db.default_schema
