@@ -7,6 +7,11 @@ class Db::Driver::MySql < Db::Driver
   def schema; nil; end
   def default_schema; nil; end
 
+  def transaction
+    # MySQL seems not to support sharing transaction between multiple clients
+    yield
+  end
+
   def tables
     sql = "SHOW FULL TABLES WHERE TABLE_TYPE != 'VIEW'"
     result = @db.query(sql)
@@ -48,6 +53,14 @@ class Db::Driver::MySql < Db::Driver
     unless status.success?
       raise "Fatal: mysql exited with code #{status.exit_code}"
     end
+  end
+
+  def supports_sequences?
+    false
+  end
+
+  def dump_sequences : IO::Memory
+    IO::Memory.new(0)
   end
 
   def defer_fk_constraints(&block)

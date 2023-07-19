@@ -59,6 +59,6 @@ class Db
     end
   end
 
-  delegate :schema, :default_schema, :tables, :clear!, :dump_schema, :escape_table_name, :get_array_fields, :load_schema, :defer_fk_constraints, :offset_sql, :placeholder_type, :table_as_csv, :table_from_csv, to: @driver
-  delegate :transaction, :uri, to: @db
+  delegate :schema, :default_schema, :tables, :clear!, :dump_schema, :dump_sequences, :escape_table_name, :get_array_fields, :load_schema, :defer_fk_constraints, :offset_sql, :placeholder_type, :supports_sequences?, :table_as_csv, :table_from_csv, :transaction, to: @driver
+  delegate :scalar, :uri, to: @db
 end
